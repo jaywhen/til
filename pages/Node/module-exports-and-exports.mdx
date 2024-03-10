@@ -1,0 +1,85 @@
+# Node.js module.exports vs. exports
+
+Always, in CommonJS, we use `module.exports` or `exports` to export functions, variables, etc. 
+However, it's generally recommended to use `module.exports` for consistency and to avoid potential issues.
+
+Here's why:
+
+- **Returned Value**: When you use require to import a module in another file, only the value assigned to `module.exports` is actually returned. exports itself is not returned.
+- **Reference**: `exports` is simply a reference to `module.exports`. Initially, they both point to the same empty object.
+
+Based on the two rules above, if you export like this way:
+
+```js copy filename="lib.js"
+exports = {
+  add: (a, b) => a + b,
+  MAX: 20,
+};
+```
+
+and use like this:
+
+
+```js copy filename="index.js"
+const lib = require("./lib");
+
+console.log(lib); // {}
+console.log(lib.add(1, 2)); // TypeError: lib.add is not a function
+console.log(lib.MAX); // undefined
+```
+
+it will be throw errors.
+
+In javascript, we know if we change the attributes of an object, 
+that will be affect all the values referenced to this object:
+
+```js {3} copy
+const a = { v: 1 };
+const b = a;
+b.v = 2;
+console.log(a); // { v: 2 }
+```
+
+but if we re-assign the whole reference object to other value, 
+then any changes to the object will not make any effects to the original one:
+
+```js {3, 6} copy
+const a = { v: 1 };
+let b = a;
+b.v = 2;
+console.log(a); // { v: 2 }
+
+b = { v: 3 };
+console.log(a); // { v: 2 }
+```
+
+since the module just return `module.exports` when it required, 
+assigning a new object to `exports` can break the reference between `exports` and `module.exports`.
+
+So, that's the why we should always use `module.exports` instead of `exports` in CJS modules.
+
+While it's technically possible to use `exports` for individual property assignments, 
+it's generally discouraged due to the potential for confusion and the risk of accidentally breaking the reference.
+
+Here's an alternative way to use `exports` (but consider `module.exports` for better practice):
+
+```js copy
+exports.add = (a, b) => a + b;
+exports.MAX = (a, b) => 20;
+```
+
+or
+
+```js copy
+exports = {
+  add: (a, b) => a + b,
+  MAX: 20,
+};
+
+module.exports = exports;
+```
+
+The reason is obvious.
+
+However, to maintain consistency and avoid confusion, 
+it's strongly recommended to use `module.exports` throughout your code.
